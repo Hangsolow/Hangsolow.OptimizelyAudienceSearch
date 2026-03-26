@@ -8,9 +8,8 @@ on:
 
 jobs:
   build:
-    name: Build & Pack
+    name: Build & Pack validation
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,17 +18,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-
-      - name: Add Optimizely NuGet source
-        run: |
-          dotnet nuget add source https://api.nuget.optimizely.com/v3/index.json \
-            --name optimizely \
-            --username ci \
-            --password ${{ secrets.OPTIMIZELY_NUGET_TOKEN }} \
-            --store-password-in-clear-text
-        env:
-          OPTIMIZELY_NUGET_TOKEN: ${{ secrets.OPTIMIZELY_NUGET_TOKEN }}
-
       - name: Restore dependencies
         run: dotnet restore
 
