@@ -1,14 +1,18 @@
 <Project>
   <!--
     This targets file is automatically imported by consuming projects via NuGet conventions.
-    It copies the Optimizely shell module files into the project's output directory so the
-    CMS can serve them at runtime from modules/_protected/Hangsolow.OptimizelyAudienceSearch/.
+    It copies the Optimizely shell module files into the consuming project's source directory
+    so the CMS can resolve them at runtime from modules/_protected/Hangsolow.OptimizelyAudienceSearch/.
   -->
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\contentFiles\any\any\modules\_protected\Hangsolow.OptimizelyAudienceSearch\**\*"
-          Condition="'$(PackageId)' != 'Hangsolow.OptimizelyAudienceSearch'">
-      <Link>modules\_protected\Hangsolow.OptimizelyAudienceSearch\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <_HangsolowModuleFiles Include="$(MSBuildThisFileDirectory)..\contentFiles\any\any\modules\_protected\Hangsolow.OptimizelyAudienceSearch\**\*"
+                           Condition="'$(PackageId)' != 'Hangsolow.OptimizelyAudienceSearch'" />
   </ItemGroup>
+
+  <Target Name="CopyHangsolowAudienceSearchModule" BeforeTargets="Build"
+          Condition="'$(PackageId)' != 'Hangsolow.OptimizelyAudienceSearch'">
+    <Copy SourceFiles="@(_HangsolowModuleFiles)"
+          DestinationFiles="@(_HangsolowModuleFiles -> '$(MSBuildProjectDirectory)\modules\_protected\Hangsolow.OptimizelyAudienceSearch\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
 </Project>
