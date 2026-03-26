@@ -24,6 +24,8 @@
     <!-- Produce symbols package for NuGet.org -->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <_ModuleZipPath>$(MSBuildProjectDirectory)\..\..\build\Hangsolow.OptimizelyAudienceSearch.zip</_ModuleZipPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,7 +38,7 @@
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!-- Include the MSBuild .targets file so consuming projects auto-copy module files -->
+  <!-- Include the MSBuild .targets file so consuming projects auto-copy the module ZIP -->
   <ItemGroup>
     <None Include="..\..\build\Hangsolow.OptimizelyAudienceSearch.targets"
           Pack="true"
@@ -44,13 +46,23 @@
   </ItemGroup>
 
   <!--
-    Pack the module files into contentFiles/any/any/... so the .targets file can reference
-    them and copy them into the consuming project's output directory.
+    Pack the module ZIP into contentFiles so the .targets file can copy it into the
+    consuming project's modules/_protected/ directory at build time.
   -->
   <ItemGroup>
-    <None Include="modules\_protected\Hangsolow.OptimizelyAudienceSearch\**\*"
+    <None Include="$(_ModuleZipPath)"
           Pack="true"
-          PackagePath="contentFiles\any\any\modules\_protected\Hangsolow.OptimizelyAudienceSearch\%(RecursiveDir)%(Filename)%(Extension)" />
+          PackagePath="contentFiles\any\any\modules\_protected\Hangsolow.OptimizelyAudienceSearch\Hangsolow.OptimizelyAudienceSearch.zip" />
   </ItemGroup>
+
+  <!--
+    Create the module ZIP from source files before building or packing.
+    The ZIP is a build artifact and is not committed to source control.
+  -->
+  <Target Name="CreateModuleZip" BeforeTargets="Build;Pack">
+    <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\modules\_protected\Hangsolow.OptimizelyAudienceSearch"
+                  DestinationFile="$(_ModuleZipPath)"
+                  Overwrite="true" />
+  </Target>
 
 </Project>
