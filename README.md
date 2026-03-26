@@ -20,7 +20,7 @@ When editors personalize content blocks, the audience list can grow long. This m
 
 | Optimizely CMS | .NET  |
 |---------------|-------|
-| 12.x          | 6, 8, 9, 10 |
+| 12.x          | 10 |
 
 ---
 
