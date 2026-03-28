@@ -61,3 +61,28 @@ src/.../modules/_protected/
 - Versions are derived from Git tags (`v1.2.3` → `1.2.3`) by the release workflow
 - The package targets `EPiServer.CMS.UI.Core` version range `[12.0.0, 13.0.0)`
 - `.slnx` format is used (Visual Studio folder-based solution)
+
+## Git workflow
+
+When pushing code changes to GitHub, always follow this branching and PR convention:
+
+### Branch naming
+Create a new branch using the pattern:
+```
+feature/copilot/<short-description>
+```
+Examples: `feature/copilot/add-search-tool`, `feature/copilot/fix-publish-trigger`
+
+```bash
+git checkout -b feature/copilot/<short-description>
+```
+
+### Pull requests
+Always open PRs against the **`release`** branch — never directly to `main`.
+
+The `release` branch triggers a beta release (`-beta.N`) via `release.yml`. Once the beta is verified, the repo owner merges `release` → `main` to produce a stable release.
+
+```bash
+git push origin feature/copilot/<short-description>
+gh pr create --base release --title "<title>" --body "<description>"
+```
