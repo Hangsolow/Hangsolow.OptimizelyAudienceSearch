@@ -7,6 +7,10 @@ on:
     workflows: ["Release"]
     types: [completed]
 
+permissions:
+  id-token: write
+  contents: read    
+
 jobs:
   publish:
     name: Push to NuGet.org
