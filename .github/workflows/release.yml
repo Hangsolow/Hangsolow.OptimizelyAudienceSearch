@@ -5,6 +5,7 @@ on:
     tags:
       - "v*.*.*"
     branches:
+      - main
       - release
 
 permissions:
@@ -30,20 +31,25 @@ jobs:
           else
             LATEST_STABLE=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
             if [ -z "$LATEST_STABLE" ]; then
-              STABLE_BASE="1.0.0"
+              NEXT_MINOR="1.0.0"
             else
               IFS='.' read -ra PARTS <<< "${LATEST_STABLE#v}"
-              STABLE_BASE="${PARTS[0]}.${PARTS[1]}.$((${PARTS[2]} + 1))"
+              NEXT_MINOR="${PARTS[0]}.$((${PARTS[1]} + 1)).0"
             fi
-            LATEST_BETA=$(git tag --sort=-version:refname | grep -E "^v${STABLE_BASE}-beta\.[0-9]+$" | head -1)
-            if [ -z "$LATEST_BETA" ]; then
-              BETA_NUM=1
+            if [ "${{ github.ref_name }}" = "main" ]; then
+              VERSION="$NEXT_MINOR"
+              IS_PRERELEASE="false"
             else
-              BETA_NUM=$(echo "$LATEST_BETA" | sed 's/.*-beta\.//')
-              BETA_NUM=$((BETA_NUM + 1))
+              LATEST_BETA=$(git tag --sort=-version:refname | grep -E "^v${NEXT_MINOR}-beta\.[0-9]+$" | head -1)
+              if [ -z "$LATEST_BETA" ]; then
+                BETA_NUM=1
+              else
+                BETA_NUM=$(echo "$LATEST_BETA" | sed 's/.*-beta\.//')
+                BETA_NUM=$((BETA_NUM + 1))
+              fi
+              VERSION="${NEXT_MINOR}-beta.${BETA_NUM}"
+              IS_PRERELEASE="true"
             fi
-            VERSION="${STABLE_BASE}-beta.${BETA_NUM}"
-            IS_PRERELEASE="true"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
