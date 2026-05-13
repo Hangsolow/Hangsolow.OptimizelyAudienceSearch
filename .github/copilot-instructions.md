@@ -86,3 +86,9 @@ The `release` branch triggers a beta release (`-beta.N`) via `release.yml`. Once
 git push origin feature/copilot/<short-description>
 gh pr create --base release --title "<title>" --body "<description>"
 ```
+
+## Samples
+
+- `samples/AlloySample` is the Alloy CMS app copied from the reference sample and wired to the local `Hangsolow.OptimizelyAudienceSearch` project via `ProjectReference`.
+- `samples/AlloySample.AppHost` hosts the sample with Aspire and points at the sample web project through `Projects.AlloySample`.
+- The solution file groups these under `/samples/` alongside `/src/`.

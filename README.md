@@ -73,3 +73,16 @@ Pull requests are welcome. Please open an issue first to discuss any significant
 ## License
 
 [MIT](LICENSE)
+
+## Sample App
+
+This repository includes an Alloy CMS sample at `samples/AlloySample` and an Aspire AppHost at `samples/AlloySample.AppHost`.
+
+Run it with:
+
+```bash
+dotnet restore samples/AlloySample.AppHost/AlloySample.AppHost.csproj
+dotnet run --project samples/AlloySample.AppHost/AlloySample.AppHost.csproj
+```
+
+The AppHost starts SQL Server and launches the Alloy sample web app.
