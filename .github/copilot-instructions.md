@@ -92,3 +92,58 @@ gh pr create --base release --title "<title>" --body "<description>"
 - `samples/AlloySample` is the Alloy CMS app copied from the reference sample and wired to the local `Hangsolow.OptimizelyAudienceSearch` project via `ProjectReference`.
 - `samples/AlloySample.AppHost` hosts the sample with Aspire and points at the sample web project through `Projects.AlloySample`.
 - The solution file groups these under `/samples/` alongside `/src/`.
+
+### Running the Sample App with Aspire
+
+Start the Alloy sample CMS with SQL Server using Aspire:
+
+```bash
+cd OptimizelyAudienceSearch
+aspire start
+```
+
+This command:
+1. Builds the solution
+2. Starts a persistent SQL Server container with Optimizely database
+3. Launches the Alloy sample web app
+4. Outputs the web resource URLs and Aspire dashboard link
+
+**Resource endpoints** (once running):
+- Web app (HTTPS): `https://localhost:5000`
+- Web app (HTTP): `http://localhost:5001`
+- Aspire dashboard: `https://localhost:17200` (with auth token)
+
+**To retrieve the CMS admin password:**
+
+The cms-password parameter is auto-generated on first startup. Check the Aspire logs:
+
+```bash
+aspire logs web | grep -i password
+```
+
+Or inspect the AppHost parameter store manually (password is persisted in the Aspire backend).
+
+**Creating the admin account:**
+
+1. Visit `https://localhost:5000` or `http://localhost:5001`
+2. If the CMS has no admin account, you'll be prompted during first startup
+3. Create account:
+   - **Username**: `admin`
+   - **Email**: `admin@localhost`
+   - **Password**: Use the generated cms-password (or set your own if prompted)
+
+**Verifying the addon:**
+
+1. Log in to the CMS admin shell (`/EPiServer/` or `/CMS/` path)
+2. Navigate to **Visitors Groups** or **Audiences** admin UI
+3. Click to edit an audience → open the "Who can see this content?" picker
+4. Confirm the real-time search filter input is visible at the top of the audience list
+
+**Troubleshooting:**
+
+- Check resource status: `aspire describe`
+- View console logs: `aspire logs web`
+- View structured traces: `aspire otel logs web`
+- Restart a resource: `aspire resource web rebuild` (applies code changes and restarts)
+- Stop all resources: `Ctrl+C` in the terminal running `aspire start`
+

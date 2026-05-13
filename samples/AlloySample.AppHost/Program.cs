@@ -1,9 +1,9 @@
 var builder = DistributedApplication.CreateBuilder(args);
-
-var sqlPassword = builder.AddParameter("sql-password", secret: true);
-
+var sqlPasswordDefault = new GenerateParameterDefault();
+var sqlPassword = builder.AddParameter("sql-password", sqlPasswordDefault, secret: true, persist: true);
+var cmsPassword = builder.AddParameter("cms-password", sqlPasswordDefault, secret: true, persist: true);
 var sql = builder.AddSqlServer("sql", password: sqlPassword)
-    .WithDataBindMount(Path.Combine(builder.AppHostDirectory, "..", "AlloySample", "App_Data"))
+    .WithDataBindMount("obj/sql-data")
     .WithLifetime(ContainerLifetime.Persistent);
 
 var db = sql.AddDatabase("EPiServerDB", "AlloySample");
