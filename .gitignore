@@ -5,14 +5,10 @@ obj/
 *.suo
 
 # NuGet
-*.nupkg
-*.snupkg
 .nuget/
 
 # Build artifacts
 build/*.zip
-artifacts/
-
 # OS
 .DS_Store
 Thumbs.db
