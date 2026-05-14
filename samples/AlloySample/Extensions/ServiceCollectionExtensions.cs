@@ -3,7 +3,6 @@ using AlloySample.Business.Channels;
 using AlloySample.Business.Rendering;
 using EPiServer.Shell.Modules;
 using EPiServer.Web;
-using Hangsolow.OptimizelyAudienceSearch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 
@@ -24,9 +23,7 @@ public static class ServiceCollectionExtensions
         });
 
         services.Configure<MvcOptions>(options => options.Filters.Add<PageContextActionFilter>());
-        services.AddOptimizelyAudienceSearch();
         services.AddDisplayResolutions();
-        services.AddDetection();
 
         return services;
     }

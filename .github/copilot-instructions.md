@@ -103,7 +103,7 @@ gh pr create --base release --title "<title>" --body "<description>"
 
 ## Samples
 
-- `samples/AlloySample` is the Alloy CMS app copied from the reference sample and wired to the local `Hangsolow.OptimizelyAudienceSearch` project via `ProjectReference`.
+- `samples/AlloySample` is the Alloy CMS app referencing `Hangsolow.OptimizelyAudienceSearch` via a `PackageReference`. The pinned version must be a locally-built `-dev` package (e.g. `1.2.3-dev`). Build a local package first (`dotnet pack --configuration Release -p:Version=<x.y.z-dev> --output ./artifacts`), then update the `PackageReference` version in `samples/AlloySample/AlloySample.csproj` to match.
 - `samples/AlloySample.AppHost` hosts the sample with Aspire and points at the sample web project through `Projects.AlloySample`.
 - The solution file groups these under `/samples/` alongside `/src/`.
 
