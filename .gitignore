@@ -6,12 +6,15 @@ obj/
 
 # NuGet
 .nuget/
+*.nupkg
+*.snupkg
 
 # Build artifacts
 build/*.zip
 # OS
 .DS_Store
 Thumbs.db
+artifacts/
 
 # Rider / VS
 .idea/
