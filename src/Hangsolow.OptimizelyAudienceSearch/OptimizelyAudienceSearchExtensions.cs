@@ -15,9 +15,10 @@ public static class OptimizelyAudienceSearchExtensions
     {
         services.Configure<ProtectedModuleOptions>(o =>
         {
-            if (!o.Items.Any(i => i.Name.Equals("Hangsolow.OptimizelyAudienceSearch", StringComparison.OrdinalIgnoreCase)))
+            const string moduleName = "Hangsolow.OptimizelyAudienceSearch";
+            if (!o.Items.Any(i => i.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase)))
             {
-                o.Items.Add(new ModuleDetails { Name = "Hangsolow.OptimizelyAudienceSearch" });
+                o.Items.Add(new ModuleDetails { Name = moduleName });
             }
         });
 

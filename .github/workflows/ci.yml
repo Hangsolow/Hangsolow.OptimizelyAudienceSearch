@@ -19,10 +19,10 @@ jobs:
         with:
           dotnet-version: "10.0.x"
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/Hangsolow.OptimizelyAudienceSearch/Hangsolow.OptimizelyAudienceSearch.csproj
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build src/Hangsolow.OptimizelyAudienceSearch/Hangsolow.OptimizelyAudienceSearch.csproj --no-restore --configuration Release
 
       - name: Pack (validation)
-        run: dotnet pack --no-build --configuration Release --output ./artifacts
+        run: dotnet pack src/Hangsolow.OptimizelyAudienceSearch/Hangsolow.OptimizelyAudienceSearch.csproj --no-build --configuration Release --output ./artifacts

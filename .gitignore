@@ -5,19 +5,22 @@ obj/
 *.suo
 
 # NuGet
+.nuget/
 *.nupkg
 *.snupkg
-.nuget/
 
 # Build artifacts
 build/*.zip
-artifacts/
-
 # OS
 .DS_Store
 Thumbs.db
+artifacts/
 
 # Rider / VS
 .idea/
 .vs/
+.vscode/
 *.DotSettings.user
+
+modules/
+blobs/
