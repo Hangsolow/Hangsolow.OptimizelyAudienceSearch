@@ -21,3 +21,6 @@ Thumbs.db
 .idea/
 .vs/
 *.DotSettings.user
+
+modules/
+blobs/

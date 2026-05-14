@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`Hangsolow.OptimizelyAudienceSearch` is a NuGet package for **Optimizely CMS 12** that injects a real-time search filter into the CMS "Who can see this content?" audience picker. It is a single-project solution with no server-side runtime logic — just a DI registration hook and a client-side Dojo AMD module.
+`Hangsolow.OptimizelyAudienceSearch` is a NuGet package for **Optimizely CMS 12** that injects a real-time search filter into the CMS "Who can see this content?" audience picker. The package implementation is a single-project library with no server-side runtime logic, just a DI registration hook and a client-side Dojo AMD module.
 
 ## Build & Pack
 
@@ -94,11 +94,14 @@ gh pr create --base release --title "<title>" --body "<description>"
 - The solution file groups these under `/samples/` alongside `/src/`.
 
 ### Running the Sample App with Aspire
+Start by reading the Aspire skill. Then check whether Aspire is already running.
 
-Start the Alloy sample CMS with SQL Server using Aspire:
+- If it is running, stop it first.
+- Start the Alloy sample CMS with SQL Server using Aspire.
+
+Run:
 
 ```bash
-cd OptimizelyAudienceSearch
 aspire start
 ```
 
@@ -115,10 +118,10 @@ This command:
 
 **To retrieve the CMS admin password:**
 
-The cms-password parameter is auto-generated on first startup. Check the Aspire logs:
+The cms-password parameter is auto-generated on first startup. Get it by using the Aspire CLI to view secrets.
 
 ```bash
-aspire logs web | grep -i password
+aspire secret get Parameters:cms-password
 ```
 
 Or inspect the AppHost parameter store manually (password is persisted in the Aspire backend).
@@ -134,7 +137,7 @@ Or inspect the AppHost parameter store manually (password is persisted in the As
 
 **Verifying the addon:**
 
-1. Log in to the CMS admin shell (`/EPiServer/` or `/CMS/` path)
+1. Log in to the CMS admin shell (`/EPiServer/CMS` path)
 2. Navigate to **Visitors Groups** or **Audiences** admin UI
 3. Click to edit an audience → open the "Who can see this content?" picker
 4. Confirm the real-time search filter input is visible at the top of the audience list
