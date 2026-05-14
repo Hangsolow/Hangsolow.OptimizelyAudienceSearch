@@ -28,6 +28,9 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <_ModuleZipPath>$(MSBuildProjectDirectory)\..\..\build\Hangsolow.OptimizelyAudienceSearch.zip</_ModuleZipPath>
+    <_ModuleSourceDir>$(MSBuildProjectDirectory)\modules\_protected\Hangsolow.OptimizelyAudienceSearch</_ModuleSourceDir>
+    <_ModuleStagingDir>$(BaseIntermediateOutputPath)module-staging\Hangsolow.OptimizelyAudienceSearch</_ModuleStagingDir>
+    <_ModuleCacheBuster>$(Version)</_ModuleCacheBuster>
   </PropertyGroup>
 
   <ItemGroup>
@@ -61,8 +64,39 @@
     Create the module ZIP from source files before building or packing.
     The ZIP is a build artifact and is not committed to source control.
   -->
+  <Target Name="PrepareModuleStaging" BeforeTargets="CreateModuleZip">
+    <RemoveDir Directories="$(_ModuleStagingDir)"
+               Condition="Exists('$(_ModuleStagingDir)')" />
+
+    <MakeDir Directories="$(_ModuleStagingDir)\ClientResources\$(_ModuleCacheBuster)\scripts" />
+    <MakeDir Directories="$(_ModuleStagingDir)\ClientResources\$(_ModuleCacheBuster)\styles" />
+
+    <ReadLinesFromFile File="$(_ModuleSourceDir)\module.config">
+      <Output TaskParameter="Lines" ItemName="_ModuleConfigLines" />
+    </ReadLinesFromFile>
+
+    <ItemGroup>
+      <_ModuleConfigLinesTransformed Include="@(_ModuleConfigLines)">
+        <Text>$([System.String]::Copy('%(Identity)').Replace('__CACHE_BUSTER__', '$(_ModuleCacheBuster)'))</Text>
+      </_ModuleConfigLinesTransformed>
+
+      <_ModuleScriptFiles Include="$(_ModuleSourceDir)\ClientResources\scripts\**\*.*" />
+      <_ModuleStyleFiles Include="$(_ModuleSourceDir)\ClientResources\styles\**\*.*" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(_ModuleStagingDir)\module.config"
+                      Lines="@(_ModuleConfigLinesTransformed->'%(Text)')"
+                      Overwrite="true" />
+
+    <Copy SourceFiles="@(_ModuleScriptFiles)"
+          DestinationFiles="@(_ModuleScriptFiles->'$(_ModuleStagingDir)\ClientResources\$(_ModuleCacheBuster)\scripts\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <Copy SourceFiles="@(_ModuleStyleFiles)"
+          DestinationFiles="@(_ModuleStyleFiles->'$(_ModuleStagingDir)\ClientResources\$(_ModuleCacheBuster)\styles\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
   <Target Name="CreateModuleZip" BeforeTargets="Build;Pack">
-    <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\modules\_protected\Hangsolow.OptimizelyAudienceSearch"
+    <ZipDirectory SourceDirectory="$(_ModuleStagingDir)"
                   DestinationFile="$(_ModuleZipPath)"
                   Overwrite="true" />
   </Target>

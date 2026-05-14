@@ -56,13 +56,13 @@ define([
         rows.forEach(function (row) {
             var label = row.querySelector(LABEL_SELECTOR);
             var text  = label ? label.textContent.toLowerCase() : "";
-            row.style.display = (!norm || text.indexOf(norm) !== -1) ? "" : "none";
+            row.style.visibility = (!norm || text.indexOf(norm) !== -1) ? "visible" : "collapse";
         });
     }
 
     function resetRowVisibility(container) {
         container.querySelectorAll(MENU_ROW_SELECTOR).forEach(function (row) {
-            row.style.display = "";
+            row.style.visibility = "visible";
         });
     }
 
@@ -117,6 +117,28 @@ define([
         wrap.appendChild(input);
         wrap.appendChild(clearBtn);
         filterRow.appendChild(wrap);
+
+        /* Keep popup open while interacting with filter controls */
+        [filterRow, wrap, input, clearBtn].forEach(function (node) {
+            node.addEventListener("mousedown", function (e) {
+                e.stopPropagation();
+            });
+            node.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
+        });
+
+        /*
+         * Keep focus in the filter input while selecting rows.
+         * Without this, Dojo can close the popup on input blur before the
+         * CheckedMenuItem click handler toggles the audience state.
+         */
+        contentDiv.addEventListener("mousedown", function (e) {
+            var row = e.target && e.target.closest ? e.target.closest(MENU_ROW_SELECTOR) : null;
+            if (row) {
+                e.preventDefault();
+            }
+        });
 
         tooltipContainer.insertBefore(filterRow, contentDiv);
 

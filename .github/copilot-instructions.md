@@ -24,6 +24,20 @@ https://api.nuget.optimizely.com/v3/index.json
 
 In CI, `OPTIMIZELY_NUGET_TOKEN` is used as an environment variable to add this source.
 
+## Local NuGet Versioning For Samples
+
+When building packages locally for use in the sample project, always use a `-dev` version suffix.
+
+- Required format: `<stable-version>-dev` (example: `1.2.3-dev`)
+- Do not reference a plain stable version from local feeds in `samples/AlloySample`.
+- Keep stable versions for tagged CI/release builds only.
+
+Example local pack command:
+
+```bash
+dotnet pack --no-build --configuration Release -p:Version=1.2.3-dev --output ./artifacts
+```
+
 ## Architecture
 
 ```
