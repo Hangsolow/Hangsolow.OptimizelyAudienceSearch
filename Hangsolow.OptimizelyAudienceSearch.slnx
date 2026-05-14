@@ -2,4 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/Hangsolow.OptimizelyAudienceSearch/Hangsolow.OptimizelyAudienceSearch.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/AlloySample/AlloySample.csproj" />
+    <Project Path="samples/AlloySample.AppHost/AlloySample.AppHost.csproj" />
+  </Folder>
 </Solution>

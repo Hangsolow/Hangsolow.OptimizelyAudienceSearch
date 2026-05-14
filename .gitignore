@@ -20,4 +20,8 @@ Thumbs.db
 # Rider / VS
 .idea/
 .vs/
+.vscode/
 *.DotSettings.user
+
+modules/
+blobs/
