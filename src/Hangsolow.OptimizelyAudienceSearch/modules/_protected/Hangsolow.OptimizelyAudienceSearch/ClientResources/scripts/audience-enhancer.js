@@ -79,6 +79,10 @@ define([
         var contentDiv = tooltipContainer.querySelector(".epi-tooltipDialogContent--max-height");
         if (!contentDiv) return;
 
+        function getPopupRoot() {
+            return widget.closest(".dijitPopup");
+        }
+
         /* ── Build the filter row ──────────────────────────────────────── */
         var filterRow = document.createElement("div");
         filterRow.className = "epi-audience-filter-row";
@@ -118,6 +122,138 @@ define([
         wrap.appendChild(clearBtn);
         filterRow.appendChild(wrap);
 
+        var currentTerm = "";
+        var preserveFilterOnReopen = false;
+
+        var keepPopupOpenForSelection = false;
+        var suppressOutsideCloseUntil = 0;
+
+        function patchPopupCloseBehavior() {
+            if (typeof dijit === "undefined" || !dijit.popup) return;
+
+            if (!dijit.popup._audienceFilterKeepOpenById) {
+                dijit.popup._audienceFilterKeepOpenById = {};
+            }
+
+            if (!dijit.popup._audienceFilterOriginalClose) {
+                dijit.popup._audienceFilterOriginalClose = dijit.popup.close;
+                dijit.popup.close = function (closeTarget) {
+                    var closeTargetId = closeTarget && closeTarget.id ? closeTarget.id : "";
+                    if (closeTargetId && dijit.popup._audienceFilterKeepOpenById[closeTargetId]) {
+                        return;
+                    }
+
+                    return dijit.popup._audienceFilterOriginalClose.apply(this, arguments);
+                };
+            }
+        }
+
+        patchPopupCloseBehavior();
+
+        function closePopupFromOutsideClick() {
+            if (typeof dijit === "undefined" || !dijit.popup || !widget.id) return;
+
+            var popupRoot = getPopupRoot();
+
+            if (dijit.popup._audienceFilterKeepOpenById) {
+                dijit.popup._audienceFilterKeepOpenById[widget.id] = false;
+            }
+
+            var ownerDropDown = null;
+            if (popupRoot && popupRoot.id && dijit.registry && dijit.registry.byId) {
+                var ownerId = popupRoot.id.replace("_dropdown", "");
+                var ownerWidget = dijit.registry.byId(ownerId);
+                if (ownerWidget && ownerWidget.dropDown) {
+                    ownerDropDown = ownerWidget.dropDown;
+                }
+            }
+
+            if (ownerDropDown && ownerDropDown.id && dijit.popup._audienceFilterKeepOpenById) {
+                dijit.popup._audienceFilterKeepOpenById[ownerDropDown.id] = false;
+            }
+
+            var closeFn = dijit.popup._audienceFilterOriginalClose || dijit.popup.close;
+            closeFn.call(dijit.popup, ownerDropDown || widget);
+
+            var fallbackApplied = false;
+            if (popupRoot && window.getComputedStyle(popupRoot).display !== "none") {
+                popupRoot.style.display = "none";
+                fallbackApplied = true;
+            }
+        }
+
+        function wireIframeOutsideClose() {
+            function attachToFrame(frame) {
+                if (!frame || frame.dataset.audienceOutsideCloseWired === "1") return;
+
+                function attachFrameDocumentListeners() {
+                    try {
+                        var frameDoc = frame.contentDocument;
+                        if (!frameDoc || frame.dataset.audienceOutsideCloseWired === "1") return;
+
+                        frameDoc.addEventListener("mousedown", function () {
+                            if (Date.now() < suppressOutsideCloseUntil) return;
+                            closePopupFromOutsideClick();
+                        }, true);
+
+                        frameDoc.addEventListener("focusin", function () {
+                            if (Date.now() < suppressOutsideCloseUntil) return;
+                            closePopupFromOutsideClick();
+                        }, true);
+
+                        frame.dataset.audienceOutsideCloseWired = "1";
+                    } catch (err) {
+                        /* Ignore cross-origin frame access failures. */
+                    }
+                }
+
+                frame.addEventListener("load", attachFrameDocumentListeners);
+                attachFrameDocumentListeners();
+            }
+
+            document.querySelectorAll("iframe").forEach(attachToFrame);
+        }
+
+        function isOutsidePopupAndOpener(target) {
+            if (Date.now() < suppressOutsideCloseUntil) {
+                return false;
+            }
+
+            var popupRoot = getPopupRoot();
+            if (!popupRoot) return false;
+            if (window.getComputedStyle(popupRoot).display === "none") return false;
+
+            var opener = widget.id
+                ? document.querySelector(".epi-tree-mngr--view-settings[aria-owns='" + widget.id + "']")
+                : null;
+
+            var clickedInsidePopup = popupRoot.contains(target);
+            var clickedOnOpener = opener ? opener.contains(target) : false;
+            return !clickedInsidePopup && !clickedOnOpener;
+        }
+
+        function patchMenuExecuteBehavior() {
+            if (typeof dijit === "undefined" || !dijit.registry || !dijit.registry.byId) return;
+
+            var menuTable = contentDiv.querySelector("table.dijitMenuTable");
+            if (!menuTable) return;
+
+            var menuId = menuTable.getAttribute("widgetid") || menuTable.id;
+            if (!menuId) return;
+
+            var menuWidget = dijit.registry.byId(menuId);
+            if (!menuWidget || menuWidget._audienceFilterPatched) return;
+
+            var originalOnExecute = menuWidget.onExecute;
+            menuWidget.onExecute = function () {
+                /* Keep popup open while filtering; outside click still closes it. */
+                if (currentTerm) return;
+                return originalOnExecute.apply(menuWidget, arguments);
+            };
+
+            menuWidget._audienceFilterPatched = true;
+        }
+
         /* Keep popup open while interacting with filter controls */
         [filterRow, wrap, input, clearBtn].forEach(function (node) {
             node.addEventListener("mousedown", function (e) {
@@ -129,18 +265,69 @@ define([
         });
 
         /*
-         * Keep focus in the filter input while selecting rows.
-         * Without this, Dojo can close the popup on input blur before the
-         * CheckedMenuItem click handler toggles the audience state.
+         * Row interactions should stay inside the popup. If these events bubble
+         * to document-level handlers, the popup can close even for checkbox menu
+         * selections while filtering.
          */
-        contentDiv.addEventListener("mousedown", function (e) {
+        function stopRowEventPropagation(e) {
             var row = e.target && e.target.closest ? e.target.closest(MENU_ROW_SELECTOR) : null;
             if (row) {
-                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        contentDiv.addEventListener("mousedown", stopRowEventPropagation);
+        contentDiv.addEventListener("click", stopRowEventPropagation);
+
+        contentDiv.addEventListener("mousedown", function (e) {
+            var row = e.target && e.target.closest ? e.target.closest(MENU_ROW_SELECTOR) : null;
+            if (!row || !currentTerm) return;
+
+            keepPopupOpenForSelection = true;
+            suppressOutsideCloseUntil = Date.now() + 250;
+            if (widget.id && typeof dijit !== "undefined" && dijit.popup && dijit.popup._audienceFilterKeepOpenById) {
+                dijit.popup._audienceFilterKeepOpenById[widget.id] = true;
+            }
+
+            setTimeout(function () {
+                keepPopupOpenForSelection = false;
+                if (widget.id && typeof dijit !== "undefined" && dijit.popup && dijit.popup._audienceFilterKeepOpenById) {
+                    dijit.popup._audienceFilterKeepOpenById[widget.id] = false;
+                }
+            }, 60);
+        }, true);
+
+        document.addEventListener("mousedown", function (e) {
+            if (isOutsidePopupAndOpener(e.target)) {
+                closePopupFromOutsideClick();
+            }
+        }, true);
+
+        document.addEventListener("focusin", function (e) {
+            if (isOutsidePopupAndOpener(e.target)) {
+                closePopupFromOutsideClick();
+            }
+        }, true);
+
+        window.addEventListener("blur", function () {
+            if (Date.now() < suppressOutsideCloseUntil) return;
+
+            var popupRoot = getPopupRoot();
+            if (!popupRoot) return;
+            if (window.getComputedStyle(popupRoot).display === "none") return;
+
+            var activeTag = document.activeElement && document.activeElement.tagName
+                ? document.activeElement.tagName.toLowerCase()
+                : "";
+            if (activeTag === "iframe") {
+                closePopupFromOutsideClick();
             }
         });
 
+        wireIframeOutsideClose();
+
         tooltipContainer.insertBefore(filterRow, contentDiv);
+        patchMenuExecuteBehavior();
 
         /* ── Focus / blur styling ──────────────────────────────────────── */
         input.addEventListener("focus", function () {
@@ -153,8 +340,6 @@ define([
         });
 
         /* ── Filtering ─────────────────────────────────────────────────── */
-        var currentTerm = "";
-
         function onInput() {
             currentTerm = input.value;
             clearBtn.style.display = currentTerm ? "flex" : "none";
@@ -184,14 +369,15 @@ define([
 
         /* Re-apply filter if Dojo re-renders the menu rows */
         new MutationObserver(function () {
+            patchPopupCloseBehavior();
+            patchMenuExecuteBehavior();
             if (currentTerm) {
                 applyFilter(contentDiv, currentTerm);
             }
         }).observe(contentDiv, { childList: true, subtree: true });
 
-        /* Reset filter when popup is re-opened (widget becomes visible again) */
         new MutationObserver(function () {
-            if (widget.style.visibility === "visible" && currentTerm) {
+            if (widget.style.visibility === "visible" && currentTerm && !preserveFilterOnReopen) {
                 input.value = "";
                 currentTerm = "";
                 clearBtn.style.display = "none";
